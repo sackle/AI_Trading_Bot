@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Read-only operations monitor for the Alpaca trading bot.">
+    <title>Aegis Quantum — Operations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+</head>
+<body>
+    <a class="skip-link" href="#main-content">Skip to dashboard</a>
+    <div class="app-shell">
+        <header class="topbar">
+            <a class="brand" href="/" aria-label="Aegis Quantum operations dashboard">
+                <span class="brand-mark" aria-hidden="true">AQ</span>
+                <span class="brand-copy"><strong>Aegis Quantum</strong><span>Operations desk</span></span>
+            </a>
+            <nav class="view-tabs" aria-label="Dashboard sections">
+                <button class="view-tab is-active" type="button" data-view-target="overview" aria-controls="overview" aria-selected="true">Overview</button>
+                <button class="view-tab" type="button" data-view-target="intelligence" aria-controls="intelligence" aria-selected="false">Intelligence</button>
+                <button class="view-tab" type="button" data-view-target="system" aria-controls="system" aria-selected="false">System</button>
+            </nav>
+            <div class="topbar-status" aria-label="Current environment and connection">
+                <span class="mode-badge" id="mode-badge">{{ snapshot.mode }}</span>
+                <span class="connection" id="connection-status" title="Waiting for a live dashboard update"><i class="status-dot" aria-hidden="true"></i><span>Syncing</span></span>
+                <span class="last-updated" id="last-updated">{{ snapshot.last_updated }}</span>
+            </div>
+        </header>
+
+        <main id="main-content" class="dashboard-content">
+            <section class="dashboard-view is-active" id="overview" aria-labelledby="overview-title">
+                <div class="view-heading">
+                    <div><p class="eyebrow">Live operations</p><h1 id="overview-title">Portfolio command center</h1></div>
+                    <p class="view-description">Read-only visibility across runtime, positions, risk, and recent execution.</p>
+                </div>
+                <section class="entry-banner" id="entry-banner" aria-live="polite">
+                    <div class="entry-banner-icon" aria-hidden="true">↗</div>
+                    <div><p class="overline" id="entry-banner-label">Entry gate</p><p class="entry-banner-title" id="entry-banner-title">Loading runtime state</p><p class="entry-banner-detail" id="entry-banner-detail">The dashboard will update in a moment.</p></div>
+                    <span class="status-badge status-neutral" id="entry-gate-badge">Checking</span>
+                </section>
+                <section class="metric-grid" aria-label="Portfolio metrics">
+                    <article class="metric-card"><div class="metric-card-head"><span>Net liquidation</span><span class="metric-source" id="equity-source">Runtime</span></div><strong class="metric-value" id="metric-equity">—</strong><span class="metric-context" id="metric-equity-detail">Waiting for equity snapshot</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Session P&amp;L</span><span class="metric-source">Realized</span></div><strong class="metric-value" id="metric-pnl">—</strong><span class="metric-context" id="metric-pnl-detail">No completed trades today</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Gross exposure</span><span class="metric-source">Open book</span></div><strong class="metric-value" id="metric-exposure">—</strong><span class="metric-context" id="metric-exposure-detail">No open exposure</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Runtime health</span><span class="metric-source" id="runtime-mode">—</span></div><strong class="metric-value metric-status" id="metric-runtime">—</strong><span class="metric-context" id="metric-runtime-detail">Checking state store</span></article>
+                </section>
+                <div class="dashboard-grid overview-grid">
+                    <article class="panel performance-panel">
+                        <div class="panel-head"><div><p class="overline">Portfolio</p><h2>Equity trajectory</h2></div><span class="status-badge status-neutral" id="curve-badge">0 snapshots</span></div>
+                        <div class="chart-summary"><div><span>Window change</span><strong id="curve-window-change">—</strong></div><div><span>Session change</span><strong id="curve-session-change">—</strong></div><div><span>Visible range</span><strong id="curve-range">—</strong></div></div>
+                        <div class="equity-chart" id="equity-chart" role="img" aria-label="Portfolio equity chart"><svg viewBox="0 0 420 160" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="equity-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stop-color="#6ee7bb" stop-opacity=".22"/><stop offset="100%" stop-color="#6ee7bb" stop-opacity="0"/></linearGradient></defs><path id="equity-area" fill="url(#equity-fill)" d=""></path><polyline id="equity-line" fill="none" points="" stroke="#6ee7bb" stroke-width="2.4" vector-effect="non-scaling-stroke"></polyline></svg><p class="chart-empty" id="chart-empty">No equity history is available yet.</p></div>
+                        <p class="panel-note" id="curve-note">Portfolio data is shown when the runtime writes a heartbeat.</p>
+                    </article>
+                    <article class="panel book-panel"><div class="panel-head"><div><p class="overline">Book</p><h2>Open positions</h2></div><span class="status-badge status-neutral" id="position-count">0 open</span></div><div class="position-list" id="positions-list"></div></article>
+                    <article class="panel signal-panel"><div class="panel-head"><div><p class="overline">Scanner</p><h2>Recent signals</h2></div><span class="status-badge status-neutral" id="signals-count">0 logged</span></div><div class="signal-list" id="signals-list"></div></article>
+                    <article class="panel trade-panel"><div class="panel-head"><div><p class="overline">Execution</p><h2>Recent trade activity</h2></div><span class="panel-meta" id="trade-summary">No completed trades</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Instrument</th><th>Side</th><th>Strategy</th><th>Exit</th><th class="number">P&amp;L</th></tr></thead><tbody id="trades-body"></tbody></table></div></article>
+                </div>
+            </section>
+
+            <section class="dashboard-view" id="intelligence" aria-labelledby="intelligence-title" hidden>
+                <div class="view-heading"><div><p class="eyebrow">Decision support</p><h1 id="intelligence-title">Research and guardrails</h1></div><p class="view-description">The bot’s recorded regime, committee context, and shadow strategy evidence.</p></div>
+                <section class="metric-grid intelligence-metrics" aria-label="Decision intelligence metrics">
+                    <article class="metric-card"><div class="metric-card-head"><span>Guardian</span><span class="metric-source">Risk</span></div><strong class="metric-value metric-status" id="guardian-status">—</strong><span class="metric-context" id="guardian-detail">No guardian report yet</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Market regime</span><span class="metric-source">Macro</span></div><strong class="metric-value metric-status" id="regime-status">—</strong><span class="metric-context" id="regime-detail">No current classification</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Decisions recorded</span><span class="metric-source">Memory</span></div><strong class="metric-value" id="decision-count">—</strong><span class="metric-context" id="decision-detail">No memory statistics available</span></article>
+                    <article class="metric-card"><div class="metric-card-head"><span>Blocked signals</span><span class="metric-source">Session</span></div><strong class="metric-value" id="blocked-signals">—</strong><span class="metric-context" id="blocked-detail">No signal log found</span></article>
+                </section>
+                <div class="dashboard-grid intelligence-grid">
+                    <article class="panel decisions-panel"><div class="panel-head"><div><p class="overline">Decision ledger</p><h2>Recent approvals</h2></div><span class="panel-meta">Latest reasoning</span></div><div class="decision-list" id="decisions-list"></div></article>
+                    <article class="panel strategies-panel"><div class="panel-head"><div><p class="overline">Simulation</p><h2>Shadow strategies</h2></div><span class="panel-meta">Paper evidence</span></div><div class="table-scroll"><table class="data-table"><thead><tr><th>Strategy</th><th class="number">Trades</th><th class="number">Win rate</th><th class="number">Net P&amp;L</th></tr></thead><tbody id="strategies-body"></tbody></table></div></article>
+                    <article class="panel consensus-panel"><div class="panel-head"><div><p class="overline">Committee</p><h2>Latest consensus</h2></div><span class="panel-meta">Read-only file</span></div><pre class="consensus-copy" id="consensus-copy">No consensus has been recorded.</pre></article>
+                </div>
+            </section>
+
+            <section class="dashboard-view" id="system" aria-labelledby="system-title" hidden>
+                <div class="view-heading"><div><p class="eyebrow">Runtime integrity</p><h1 id="system-title">System status</h1></div><p class="view-description">Connection state, automated guardrails, and safe offline diagnostics.</p></div>
+                <div class="dashboard-grid system-grid">
+                    <article class="panel health-panel"><div class="panel-head"><div><p class="overline">Connectivity</p><h2>Runtime health</h2></div><span class="status-badge status-neutral" id="health-badge">Checking</span></div><dl class="key-value-list" id="health-list"></dl></article>
+                    <article class="panel market-data-panel"><div class="panel-head"><div><p class="overline">Alpaca feed</p><h2>Live market data</h2></div><span class="status-badge status-neutral" id="market-data-badge">Waiting</span></div><p class="panel-note market-data-summary" id="market-data-summary">No live market-data snapshot has been recorded.</p><div class="table-scroll"><table class="data-table"><thead><tr><th>Symbol / strategy</th><th>Timeframe</th><th class="number">Bars</th><th>Latest bar (UTC)</th><th>Status</th><th>WebSocket event</th></tr></thead><tbody id="market-data-body"></tbody></table></div></article>
+                    <article class="panel guardrail-panel"><div class="panel-head"><div><p class="overline">Risk controls</p><h2>Guardrail activity</h2></div><span class="panel-meta" id="guardrail-summary">No checks logged</span></div><div class="event-list" id="guardrails-list"></div></article>
+                    <article class="panel events-panel"><div class="panel-head"><div><p class="overline">Activity</p><h2>Latest system events</h2></div><span class="panel-meta">Sanitized summary</span></div><div class="event-list" id="events-list"></div></article>
+                    <article class="panel diagnostics-panel"><div class="panel-head"><div><p class="overline">Offline diagnostics</p><h2>Logic checks</h2></div><span class="panel-meta">Does not trade or change bot state</span></div><p class="panel-note">Runs the project’s local logic-test script and displays its result here. Use it to validate the bot code; this dashboard never starts, stops, or submits trades.</p><form method="post" action="{{ url_for('dashboard_run_logic_checks') }}"><button class="primary-button" type="submit">Run offline logic checks</button></form>{% if logic_check %}<div class="logic-result {{ 'is-ok' if logic_check.ok else 'is-failed' }}"><strong>{{ 'Checks passed' if logic_check.ok else 'Checks failed' }}</strong><span>{{ logic_check.ran_at }}</span><pre>{{ logic_check.output }}</pre></div>{% endif %}</article>
+                </div>
+            </section>
+        </main>
+    </div>
+    <template id="empty-state-template"><div class="empty-state"><span class="empty-state-icon" aria-hidden="true">○</span><p></p></div></template>
+
+    <script>
+        (() => {
+            'use strict';
+            const initialSnapshot = {{ snapshot | tojson }};
+            const fmtMoney = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 });
+            const fmtNumber = new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 });
+            const byId = (id) => document.getElementById(id);
+            const isFiniteNumber = (value) => Number.isFinite(Number(value));
+            const number = (value, fallback = 0) => isFiniteNumber(value) ? Number(value) : fallback;
+            const money = (value, signed = false) => { const valueNumber = number(value); return `${signed && valueNumber > 0 ? '+' : ''}${fmtMoney.format(valueNumber)}`; };
+            const percent = (value) => `${number(value).toFixed(2)}%`;
+            const titleCase = (value) => String(value || 'Unknown').replace(/[_-]/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase());
+            const timeOnly = (value) => String(value || '—').replace(' UTC', '').replace('T', ' ').slice(0, 16) || '—';
+            const classForValue = (value) => number(value) > 0 ? 'is-positive' : number(value) < 0 ? 'is-negative' : '';
+            const clear = (node) => { while (node.firstChild) node.removeChild(node.firstChild); };
+            const el = (tag, className, text) => { const node = document.createElement(tag); if (className) node.className = className; if (text !== undefined && text !== null) node.textContent = String(text); return node; };
+            const setText = (id, text, className) => { const node = byId(id); if (!node) return; node.textContent = text; if (className !== undefined) node.className = className; };
+            const setBadge = (id, text, tone = 'neutral') => setText(id, text, `status-badge status-${tone}`);
+            const emptyState = (container, text) => { const fragment = byId('empty-state-template').content.cloneNode(true); fragment.querySelector('p').textContent = text; container.appendChild(fragment); };
+            const statusTone = (value) => { const normalized = String(value || '').toLowerCase(); if (/(open|active|running|connected|entered|approved|pass|ok|healthy|available|receiving)/.test(normalized)) return 'positive'; if (/(halt|fail|error|blocked|reject|offline|degraded|crisis)/.test(normalized)) return 'danger'; if (/(warn|unknown|filter|waiting|stale|missing|partial)/.test(normalized)) return 'warning'; return 'neutral'; };
+
+            function renderOverview(snapshot) {
+                const runtime = snapshot.runtime || {}, account = snapshot.account || {}, accountInfo = account.info || {}, curve = snapshot.portfolio_curve || {}, curveSummary = curve.summary || {}, heatmap = snapshot.heatmap || {};
+                const entryGate = String(runtime.entry_gate || 'unknown').toLowerCase(), gateOpen = entryGate === 'open';
+                const equity = isFiniteNumber(accountInfo.equity) ? accountInfo.equity : runtime.last_equity, equitySource = isFiniteNumber(accountInfo.equity) ? 'Broker' : 'Runtime', pnl = runtime.daily_realized_pnl, runtimeStatus = runtime.status || 'not started';
+                byId('entry-banner').className = `entry-banner ${gateOpen ? 'is-open' : 'is-halted'}`;
+                setText('entry-banner-label', gateOpen ? 'Entry gate clear' : 'Entry gate restricted'); setText('entry-banner-title', gateOpen ? 'New entries are permitted' : 'New entries are paused');
+                setText('entry-banner-detail', runtime.entry_halt_reason || (gateOpen ? 'Runtime guardrails are allowing new signals.' : 'Review the runtime state and guardrail activity before resuming.')); setBadge('entry-gate-badge', titleCase(entryGate), gateOpen ? 'positive' : statusTone(entryGate));
+                setText('metric-equity', money(equity)); setText('equity-source', equitySource); setText('metric-equity-detail', account.connected ? 'Live broker account snapshot' : (account.error || 'Latest recorded runtime equity'));
+                setText('metric-pnl', money(pnl, true), `metric-value ${classForValue(pnl)}`); setText('metric-pnl-detail', `${runtime.wins || 0} wins · ${runtime.losses || 0} losses`);
+                setText('metric-exposure', percent(heatmap.total_exposure_pct)); setText('metric-exposure-detail', heatmap.has_positions ? `${(runtime.open_positions || []).length} active position${(runtime.open_positions || []).length === 1 ? '' : 's'}` : 'No open positions');
+                setText('runtime-mode', String(runtime.mode || snapshot.mode || '—')); setText('metric-runtime', titleCase(runtimeStatus), `metric-value metric-status status-text-${statusTone(runtimeStatus)}`); setText('metric-runtime-detail', runtime.last_heartbeat ? `Heartbeat ${runtime.last_heartbeat}` : (runtime.available ? 'Runtime state loaded' : 'No runtime state has been written'));
+                setBadge('curve-badge', curveSummary.badge_label || '0 snapshots', curve.available ? 'positive' : 'neutral'); setText('curve-window-change', money(curveSummary.window_change, true), classForValue(curveSummary.window_change)); setText('curve-session-change', money(curveSummary.session_change, true), classForValue(curveSummary.session_change)); setText('curve-range', money(curveSummary.visible_range)); setText('curve-note', curveSummary.source_label || 'Portfolio data is shown when the runtime writes a heartbeat.');
+                const chartAvailable = Boolean(curve.available && curve.chart_points); byId('equity-line').setAttribute('points', chartAvailable ? curve.chart_points : ''); byId('equity-area').setAttribute('d', chartAvailable ? `M 16,144 L ${curve.chart_points.replaceAll(' ', ' L ')} L 404,144 Z` : ''); byId('chart-empty').hidden = chartAvailable;
+                renderPositions(runtime.open_positions || []); renderSignals((snapshot.signals || {}).rows || []); renderTrades((snapshot.trades || {}).rows || [], (snapshot.trades || {}).summary || {});
+            }
+            function renderPositions(positions) {
+                const container = byId('positions-list'); clear(container); setBadge('position-count', `${positions.length} open`, positions.length ? 'positive' : 'neutral'); if (!positions.length) return emptyState(container, 'No open positions in the runtime book.');
+                positions.forEach((position) => { const card = el('article', 'position-row'), main = el('div', 'position-main'), name = el('strong', 'position-symbol', position.symbol || '—'), tags = el('div', 'inline-tags'); tags.appendChild(el('span', `mini-badge ${String(position.side).toLowerCase() === 'short' ? 'is-short' : 'is-long'}`, titleCase(position.side || 'long'))); if (position.adopted) tags.appendChild(el('span', 'mini-badge', 'Adopted')); main.append(name, tags); const details = el('div', 'position-details'); details.append(el('span', '', `${fmtNumber.format(number(position.qty))} units`), el('span', '', `Entry ${money(position.entry_price)}`), el('span', '', `Risk ${money(position.risk_amount)}`)); card.append(main, details, el('strong', 'position-value', money(position.notional))); container.appendChild(card); });
+            }
+            function renderSignals(signals) {
+                const container = byId('signals-list'); clear(container); setBadge('signals-count', `${signals.length} logged`); if (!signals.length) return emptyState(container, 'No recent signals have been recorded.');
+                signals.slice(0, 8).forEach((signal) => { const row = el('article', 'signal-row'), top = el('div', 'signal-top'); top.append(el('strong', 'signal-symbol', signal.symbol || '—'), el('span', `status-badge status-${statusTone(signal.status)}`, titleCase(signal.status || signal.action || 'logged'))); const copy = el('p', 'signal-copy', signal.reason || signal.action || 'Signal recorded without an explanation.'), footer = el('div', 'signal-footer'); footer.append(el('span', '', titleCase(signal.side || signal.strategy || 'Scanner')), el('span', '', timeOnly(signal.bar_time || signal.timestamp))); row.append(top, copy, footer); container.appendChild(row); });
+            }
+            function renderTrades(trades, summary) {
+                const body = byId('trades-body'); clear(body); const count = number(summary.count); setText('trade-summary', count ? `${count} strategy trade${count === 1 ? '' : 's'} · ${money(summary.realized_pnl, true)}` : 'No completed trades');
+                if (!trades.length) { const row = el('tr'), cell = el('td', 'empty-table', 'No completed trades recorded yet.'); cell.colSpan = 5; row.appendChild(cell); body.appendChild(row); return; }
+                trades.slice(0, 8).forEach((trade) => { const row = el('tr'); row.append(el('td', 'strong-cell', trade.instrument || '—'), el('td', '', titleCase(trade.direction)), el('td', 'muted-cell', titleCase(trade.strategy)), el('td', 'muted-cell', money(trade.exit_price)), el('td', `number ${classForValue(trade.profit_loss)}`, money(trade.profit_loss, true))); body.appendChild(row); });
+            }
+            function renderIntelligence(snapshot) {
+                const runtime = snapshot.runtime || {}, command = runtime.command_center || {}, guardian = command.guardian || {}, regime = command.current_regime || {}, memory = command.memory_stats || {}, signalSummary = (snapshot.signals || {}).summary || {};
+                const guardianState = guardian.status || (runtime.entry_gate === 'open' ? 'ACTIVE' : 'RESTRICTED'), regimeState = regime.regime || 'UNKNOWN';
+                setText('guardian-status', titleCase(guardianState), `metric-value metric-status status-text-${statusTone(guardianState)}`); setText('guardian-detail', `${number(guardian.consecutive_losses, runtime.consecutive_losses)} consecutive losses`);
+                setText('regime-status', titleCase(regimeState), `metric-value metric-status status-text-${statusTone(regimeState)}`); setText('regime-detail', isFiniteNumber(regime.confidence) ? `${Math.round(number(regime.confidence) * 100)}% confidence` : 'No confidence score recorded');
+                setText('decision-count', fmtNumber.format(number(memory.decisions))); setText('decision-detail', `${fmtNumber.format(number(memory.trades))} remembered trades · ${fmtNumber.format(number(memory.playbook_changes))} playbook updates`); setText('blocked-signals', fmtNumber.format(number(signalSummary.blocked))); setText('blocked-detail', `${fmtNumber.format(number(signalSummary.count))} signal${number(signalSummary.count) === 1 ? '' : 's'} in the latest log`);
+                renderDecisions(command.recent_decisions || []); renderStrategies(command.shadow_trader || {}); setText('consensus-copy', snapshot.consensus_md || 'No consensus has been recorded.');
+            }
+            function renderDecisions(decisions) { const container = byId('decisions-list'); clear(container); if (!decisions.length) return emptyState(container, 'No recent decision records are available.'); decisions.slice(0, 10).forEach((decision) => { const row = el('article', 'decision-row'), approved = Boolean(decision.approved); row.append(el('strong', 'decision-symbol', decision.symbol || '—'), el('span', `status-badge status-${approved ? 'positive' : 'danger'}`, approved ? 'Approved' : 'Rejected'), el('p', 'decision-copy', decision.reasoning || decision.reason || 'No reasoning was stored.')); container.appendChild(row); }); }
+            function renderStrategies(strategies) { const body = byId('strategies-body'); clear(body); const entries = Object.entries(strategies); if (!entries.length) { const row = el('tr'), cell = el('td', 'empty-table', 'No shadow strategies are active.'); cell.colSpan = 4; row.appendChild(cell); body.appendChild(row); return; } entries.forEach(([name, stats]) => { const trades = number(stats.trades_count), winRate = trades ? number(stats.wins) / trades * 100 : 0, row = el('tr'); row.append(el('td', 'strong-cell', titleCase(name)), el('td', 'number', fmtNumber.format(trades)), el('td', 'number', `${winRate.toFixed(1)}%`), el('td', `number ${classForValue(stats.total_pnl)}`, money(stats.total_pnl, true))); body.appendChild(row); }); }
+            function renderSystem(snapshot) {
+                const runtime = snapshot.runtime || {}, account = snapshot.account || {}, status = runtime.status || 'not started'; setBadge('health-badge', titleCase(status), statusTone(status)); const list = byId('health-list'); clear(list);
+                const workerRows = Object.entries((snapshot.coordination || {}).workers || {}).map(([name, worker]) => [`${titleCase(name)} worker`, `${titleCase(worker.status || 'unknown')} · ${worker.healthy ? 'heartbeat fresh' : 'heartbeat stale'}`]);
+                [['Runtime state', runtime.available ? 'Available' : 'Not written'], ['Bot process', (snapshot.bot_status || {}).detail || 'Unknown'], ...workerRows, ['Shared entry gate', runtime.entry_gate === 'open' ? 'Open' : (runtime.entry_halt_reason || 'Halted')], ['Broker runtime', runtime.broker_connected ? 'Connected' : 'Disconnected'], ['Account lookup', account.connected ? 'Connected' : (account.error || 'Unavailable')], ['Last heartbeat', runtime.last_heartbeat || '—'], ['Recovery count', String(number(runtime.recovery_count))]].forEach(([key, value]) => list.append(el('dt', '', key), el('dd', '', value)));
+                renderMarketData(runtime.market_data || {});
+                const guardrails = snapshot.guardrails || {}; setText('guardrail-summary', `${number((guardrails.summary || {}).count)} checks · ${number((guardrails.summary || {}).blocked)} blocked`); renderEvents('guardrails-list', guardrails.rows || [], 'No guardrail checks have been logged.'); renderEvents('events-list', (snapshot.events || {}).rows || [], 'No system events have been logged.');
+            }
+            function renderMarketData(data) {
+                const body = byId('market-data-body'); clear(body);
+                const symbols = data.symbols || {}, entries = Object.entries(symbols), stream = data.stream || {}, streamSymbols = stream.symbols || {};
+                const available = number(data.available_symbols), stale = number(data.stale_symbols), configured = number(data.configured_symbols, entries.length);
+                const coverage = !configured ? 'no bot data snapshot yet' : data.status === 'market_closed' ? `market closed · analysis-only bars ${available}/${configured}` : `${available}/${configured} symbols fresh · ${stale} stale`;
+                setText('market-data-summary', `${data.source ? titleCase(data.source) : 'Alpaca bars'} · ${data.feed || stream.feed || 'feed unknown'} · ${coverage} · snapshot ${timeOnly(data.updated_at)} · WebSocket ${titleCase(stream.status || 'unknown')}`);
+                setBadge('market-data-badge', titleCase(data.status || 'unknown'), statusTone(data.status || 'unknown'));
+                if (!entries.length) { const row = el('tr'), cell = el('td', 'empty-table', 'No market-data snapshot has been recorded by the running bot.'); cell.colSpan = 6; row.appendChild(cell); body.appendChild(row); return; }
+                entries.forEach(([symbol, item]) => {
+                    const row = el('tr'), eventMap = streamSymbols[symbol] || {};
+                    const latestEvent = Object.entries(eventMap).sort((a, b) => String(b[1]?.received_at || '').localeCompare(String(a[1]?.received_at || '')))[0];
+                    const eventLabel = latestEvent ? `${titleCase(latestEvent[0])} · ${timeOnly(latestEvent[1]?.received_at)}` : 'No event yet';
+                    row.append(el('td', 'strong-cell', `${symbol} · ${titleCase(item.strategy || '—')}`), el('td', '', item.timeframe || '—'), el('td', 'number', fmtNumber.format(number(item.bar_count))), el('td', '', timeOnly(item.latest_bar_at)), el('td', `status-text-${statusTone(item.status)}`, titleCase(item.status || 'unknown')), el('td', 'muted-cell', eventLabel));
+                    body.appendChild(row);
+                });
+            }
+            function renderEvents(containerId, events, emptyCopy) { const container = byId(containerId); clear(container); if (!events.length) return emptyState(container, emptyCopy); events.slice(0, 8).forEach((event) => { const row = el('article', 'event-row'), header = el('div', 'event-header'), type = event.status || event.event || event.type || event.level || 'Event'; header.append(el('span', `status-badge status-${statusTone(type)}`, titleCase(type)), el('span', 'event-time', timeOnly(event.timestamp || event.time || event.created_at))); const message = event.message || event.reason || event.detail || event.symbol || 'Event recorded.'; row.append(header, el('p', 'event-copy', message)); container.appendChild(row); }); }
+            function renderShell(snapshot, online = true) {
+                const mode = String(snapshot.mode || (snapshot.runtime || {}).mode || 'PAPER').toUpperCase(), modeNode = byId('mode-badge'); modeNode.textContent = mode; modeNode.className = `mode-badge ${mode === 'LIVE' ? 'is-live' : ''}`;
+                const connected = Boolean((snapshot.runtime || {}).broker_connected || (snapshot.account || {}).connected), connection = byId('connection-status'); connection.className = `connection ${online ? (connected ? 'is-online' : 'is-warning') : 'is-offline'}`; connection.querySelector('span').textContent = online ? (connected ? 'Live sync' : 'Data degraded') : 'Sync unavailable'; setText('last-updated', snapshot.last_updated || '—'); renderOverview(snapshot); renderIntelligence(snapshot); renderSystem(snapshot);
+            }
+            document.querySelectorAll('[data-view-target]').forEach((button) => button.addEventListener('click', () => { const target = button.dataset.viewTarget; document.querySelectorAll('.dashboard-view').forEach((view) => { const active = view.id === target; view.hidden = !active; view.classList.toggle('is-active', active); }); document.querySelectorAll('[data-view-target]').forEach((tab) => { const active = tab === button; tab.classList.toggle('is-active', active); tab.setAttribute('aria-selected', String(active)); }); }));
+            let currentSnapshot = initialSnapshot; renderShell(currentSnapshot);
+            async function refreshSnapshot() { try { const response = await fetch('/api/snapshot', { headers: { Accept: 'application/json' }, cache: 'no-store' }); if (!response.ok) throw new Error(`Snapshot request failed (${response.status})`); currentSnapshot = await response.json(); renderShell(currentSnapshot, true); } catch (error) { renderShell(currentSnapshot, false); console.warn('Dashboard live refresh failed.', error); } }
+            window.setInterval(refreshSnapshot, 3000);
+        })();
+    </script>
+</body>
+</html>

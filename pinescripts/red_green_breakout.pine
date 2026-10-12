@@ -1,0 +1,25 @@
+//@version=5
+strategy("Red/Green Breakout [Aegis]", overlay=true)
+
+// Condition: previous bar is red, current bar is green
+prev_red = close[1] < open[1]
+curr_green = close > open
+pattern = prev_red and curr_green
+
+// Breakout above green candle high
+breakout_level = ta.valuewhen(pattern, high, 0)
+longCondition = close > breakout_level and strategy.position_size == 0
+
+webhook_secret = input.string("your_secure_webhook_secret_here", title="Webhook Secret")
+qty = input.int(100, title="Quantity")
+
+long_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "BUY", "strategy": "red_green_breakout", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+exit_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "CLOSE", "strategy": "red_green_breakout", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+
+if (longCondition)
+    strategy.entry("Long", strategy.long, alert_message=long_payload)
+
+// Exit rules (e.g. trailing stop or time based)
+atr = ta.atr(14)
+if (strategy.position_size > 0)
+    strategy.exit("Exit", "Long", stop=close - (atr * 2.0), alert_message=exit_payload)

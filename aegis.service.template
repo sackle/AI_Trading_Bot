@@ -1,0 +1,33 @@
+[Unit]
+Description=Aegis Trading Bot - %i Service
+After=network.target redis.service
+Wants=redis.service
+
+[Service]
+Type=simple
+User=trading
+Group=trading
+WorkingDirectory=/Users/sarthak/Downloads/alpaca_trading_bot
+ExecStart=/Users/sarthak/Downloads/alpaca_trading_bot/.venv/bin/python -m bot.distributed.%i
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+TimeoutStartSec=30
+TimeoutStopSec=10
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=aegis-%i
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Resource limits
+LimitNOFILE=65535
+MemoryMax=512M
+CPUQuota=50%
+
+[Install]
+WantedBy=multi-user.target

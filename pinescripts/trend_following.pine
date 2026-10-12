@@ -1,0 +1,33 @@
+//@version=5
+strategy("Trend Following [Aegis]", overlay=true)
+
+fast_len = input.int(50, title="Fast EMA")
+slow_len = input.int(200, title="Slow EMA")
+
+fast_ema = ta.ema(close, fast_len)
+slow_ema = ta.ema(close, slow_len)
+
+plot(fast_ema, color=color.blue, title="Fast EMA")
+plot(slow_ema, color=color.orange, title="Slow EMA")
+
+longCondition = ta.crossover(fast_ema, slow_ema)
+shortCondition = ta.crossunder(fast_ema, slow_ema)
+
+webhook_secret = input.string("your_secure_webhook_secret_here", title="Webhook Secret")
+qty = input.int(100, title="Quantity")
+
+long_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "BUY", "strategy": "trend_following", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+short_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "SELL", "strategy": "trend_following", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+exit_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "CLOSE", "strategy": "trend_following", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+
+if (longCondition)
+    strategy.entry("Long", strategy.long, alert_message=long_payload)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short, alert_message=short_payload)
+
+if (strategy.position_size > 0 and close < slow_ema)
+    strategy.close("Long", alert_message=exit_payload)
+
+if (strategy.position_size < 0 and close > slow_ema)
+    strategy.close("Short", alert_message=exit_payload)

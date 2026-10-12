@@ -1,0 +1,48 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local runtime state, account/trading history, and downloaded datasets
+runtime/
+*.db
+*.sqlite
+*.sqlite3
+*.csv
+*.jsonl
+*.log
+*.rdb
+session_events_pretrain.jsonl
+banknifty_5m.csv
+
+# Trained/generated model artifacts (not reproducible source)
+xgboost_model.json
+*.pkl
+*.joblib
+*.pt
+*.pth
+*.zip
+
+# Local graph/editor/OS artifacts
+graphify-out/
+.agents/
+.claude/
+.DS_Store
+
+# One-off local repair/patch and root-level manual test scripts
+fix*.py
+patch*.py
+rewrite*.py
+wire*.py
+test_*.py
+test_*.html

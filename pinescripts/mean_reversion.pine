@@ -1,0 +1,41 @@
+//@version=5
+strategy("Mean Reversion [Aegis]", overlay=true, margin_long=100, margin_short=100)
+
+// Parameters
+length = input.int(20, minval=1, title="SMA Length")
+mult = input.float(1.5, minval=0.001, maxval=50, title="StdDev Multiplier")
+atr_length = input.int(14, title="ATR Length")
+atr_mult = input.float(2.0, title="Trailing ATR Stop Multiplier")
+
+// Bollinger Bands
+basis = ta.sma(close, length)
+dev = mult * ta.stdev(close, length)
+upper = basis + dev
+lower = basis - dev
+plot(basis, "Basis", color=color.orange)
+p1 = plot(upper, "Upper", color=color.blue)
+p2 = plot(lower, "Lower", color=color.blue)
+fill(p1, p2, title="Background", color=color.rgb(33, 150, 243, 95))
+
+atr = ta.atr(atr_length)
+
+// Entry Conditions
+longCondition = ta.crossover(close, lower)
+shortCondition = ta.crossunder(close, upper)
+
+// Webhook payload template
+// Must replace "your_secure_webhook_secret_here" in real usage
+webhook_secret = input.string("your_secure_webhook_secret_here", title="Webhook Secret")
+qty = input.int(100, title="Quantity")
+
+long_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "BUY", "strategy": "mean_reversion", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+short_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "SELL", "strategy": "mean_reversion", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+exit_payload = str.format('{{"passphrase": "{0}", "symbol": "{1}", "action": "CLOSE", "strategy": "mean_reversion", "price": {2,number,#.##}, "qty": {3}}}', webhook_secret, syminfo.ticker, close, qty)
+
+if (longCondition)
+    strategy.entry("Long", strategy.long, alert_message=long_payload)
+    strategy.exit("Exit Long", from_entry="Long", stop=close - (atr * atr_mult), alert_message=exit_payload)
+
+if (shortCondition)
+    strategy.entry("Short", strategy.short, alert_message=short_payload)
+    strategy.exit("Exit Short", from_entry="Short", stop=close + (atr * atr_mult), alert_message=exit_payload)
