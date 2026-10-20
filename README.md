@@ -25,6 +25,7 @@
   <a href="#-configuration">Configuration</a> •
   <a href="#-backtesting">Backtesting</a> •
   <a href="#-project-structure">Structure</a> •
+  <a href="AEGIS_PROJECT_REPORT.md">📋 Full Technical Report</a> •
   <a href="#-disclaimer">Disclaimer</a>
 </p>
 
@@ -34,6 +35,15 @@
 
 > **⚠️ IMPORTANT — Read before running**
 > Aegis is a software research and paper-trading demonstration project. It is **not financial advice**, does not guarantee profit, and **must never be used with real money** without independent legal, compliance, and risk review. Paper results do not predict live performance. See the [full disclaimer](#-disclaimer).
+
+### 📄 Documentation
+
+| Document | Description |
+|---|---|
+| **[README.md](README.md)** *(this file)* | Setup, configuration, quick-start for all platforms |
+| **[AEGIS_PROJECT_REPORT.md](AEGIS_PROJECT_REPORT.md)** | Full technical report — architecture, all ML models, algorithms, bot coordination, Telegram internals, trade lifecycle, risk engine, deployment, and glossary |
+| **[PROJECT_REPORT.md](PROJECT_REPORT.md)** | Audited system report — runtime status, strategy validation, data inventory, known gaps |
+| **[DEMO_RUNBOOK.md](DEMO_RUNBOOK.md)** | Paper-trading demo checklist and integration limits |
 
 ---
 
